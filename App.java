@@ -1,0 +1,18 @@
+import com.sun.net.httpserver.HttpServer; // Webサーバー機能を使います。
+import java.net.InetSocketAddress; // 待ち受ける番号（ポート）を指定します。
+
+public class App { // プログラム本体です。
+    public static void main(String[] args) throws Exception { // プログラムを開始します。
+        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0); // 8080番でサーバーを用意します。
+        server.createContext("/", exchange -> { // 「/」へのアクセスを受け取ります。
+            String message = "包囲されています( ﾟДﾟ)!"; // ブラウザへ返す文字です。
+            exchange.getResponseHeaders().set("Content-Type", "text/plain; charset=UTF-8"); // UTF-8で文字化けを防ぎます。
+            byte[] body = message.getBytes("UTF-8"); // 文字を送信できるデータにします。
+            exchange.sendResponseHeaders(200, body.length); // 成功（200）として送信を始めます。
+            exchange.getResponseBody().write(body); // 文字を送り返します。
+            exchange.getResponseBody().close(); // 送信を完了します。
+        }); // 「/」への処理を登録します。
+        server.start(); // サーバーを起動します。
+        System.out.println("サーバー起動: http://localhost:8080 （止めるときは Ctrl+C）"); // 起動した場所を表示します。
+    } // 開始処理を終えます。
+} // プログラム本体を終えます。
