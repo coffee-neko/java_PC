@@ -8,7 +8,10 @@ public class App { // プログラム本体です。
             String path = exchange.getRequestURI().getPath(); // 追加: アクセスされたパス（住所の末尾）を取り出します。
             String message;
             if (path.equals("/hello")) { // 追加: パスが /hello と同じか比べます。
-                message = "こんにちは！";
+                String query = exchange.getRequestURI().getRawQuery(); // 追加: クエリ（URLの ? より後ろ）を取り出します。
+                System.out.println("query = " + query);
+                String name = query == null ? "ゲスト" : query.substring(5); // 修正: クエリがないときはゲスト、それ以外は name= の後ろを切り出します。
+                message = "こんにちは、" + name + "さん！"; // 追加: 名前を入れたあいさつにします。
             } else if (path.equals("/menu")) { // 追加: パスが /bye と同じか比べます。
                 message = "今日のお昼はビリヤニさん";
             } else if (path.equals("/bye")) { // 追加: パスが /bye と同じか比べます。
