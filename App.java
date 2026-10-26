@@ -56,6 +56,23 @@ public class App { // プログラム本体です。
                 exchange.getResponseHeaders().set("Location", "/"); // ★追加
                 exchange.sendResponseHeaders(303, -1); // ★追加
                 return; // ★追加
+            } else if (path.equals("/undone") && method.equals("GET")) { // 追加: 完了を未完了に戻す送信を受け取ります。
+                String query = exchange.getRequestURI().getQuery(); // 追加: URLの id を取り出します。
+                if (query != null && query.startsWith("id=") && query.length() > 3) { // 追加: id があるか確認します。
+                    try {
+                        int id = Integer.parseInt(query.substring(3)); // 追加: id を数にします。
+                        for (Todo todo : todos) { // 追加: Todoを1件ずつ確認します。
+                            if (todo.getId() == id) { // 追加: id が同じTodoを見つけます。
+                                todo.setDone(false); // 追加: 未完了に戻します。
+                                break; // 追加: 見つけたので繰り返しを終えます。
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                    }
+                }
+                exchange.getResponseHeaders().set("Location", "/"); // 追加: トップページへ戻る場所を指定します。
+                exchange.sendResponseHeaders(303, -1); // 追加: 戻り先へ移動する返事を送ります。
+                return; // 追加: /undone の処理をここで終えます。
             } else if (path.equals("/delete") && method.equals("GET")) { // ★追加
                 String query = exchange.getRequestURI().getQuery(); // ★追加
                 if (query != null && query.startsWith("id=") && query.length() > 3) { // ★追加
@@ -69,17 +86,29 @@ public class App { // プログラム本体です。
                 exchange.sendResponseHeaders(303, -1); // ★追加
                 return; // ★追加
             } else if (path.equals("/")) { // 追加: トップページでフォームと一覧を表示します。
-                String html = "<form method='post' action='/add'><input name='todo'><button>追加</button></form><ul>"; // 追加:
-                                                                                                                     // 入力フォームと一覧のHTMLを始めます。
-                for (Todo todo : todos) { // ★変更
-                    String mark = ""; // ★変更
-                    if (todo.isDone()) { // ★変更
-                        mark = " ✔"; // ★変更
-                    } // ★変更
-                    html += "<li>" + todo.getTitle() + mark + " <a href='/done?id=" + todo.getId()
-                            + "'>完了</a> <a href='/delete?id=" + todo.getId() + "'>削除</a></li>"; // ★追加
-                } // 追加: Todoをすべて一覧にする処理を終えます。
-                html += "</ul>"; // 追加: 一覧のHTMLを閉じます。
+                String html = "<html><head><meta charset='UTF-8'><style>body { max-width: 600px; margin: 24px auto; font-size: 16px; }</style></head><body><h1>📝 今日のやること</h1><form method='post' action='/add'><input name='todo'><button>追加</button></form>"; // 追加: 入力フォームを始めます。
+                if (todos.isEmpty()) {
+                    html += "<p>やることないです。自由です！追加するのも、、、自由です。。</p>";
+                } else {
+                    html += "<ul>"; // 追加: 未完了の一覧のHTMLを始めます。
+                    for (Todo todo : todos) {
+                        if (!todo.isDone()) { // 追加: 未完了のTodoだけを表示します。
+                            html += "<li>" + todo.getTitle() + " <a href='/done?id=" + todo.getId()
+                                    + "'>完了</a> <a href='/delete?id=" + todo.getId() + "'>削除</a></li>";
+                        }
+                    }
+                    html += "</ul><h2>✅ 完了したこと</h2><ul>"; // 追加: 完了したTodoの一覧を始めます。
+                    for (Todo todo : todos) { // ★変更
+                        String mark = ""; // ★変更
+                        if (todo.isDone()) { // ★変更
+                            mark = " ✔"; // ★変更
+                            html += "<li>" + todo.getTitle() + mark + " <a href='/undone?id=" + todo.getId()
+                                    + "'>未完了に戻す</a> <a href='/delete?id=" + todo.getId() + "'>削除</a></li>"; // 追加: 完了したTodoを一覧の1行にします。
+                        } // ★変更
+                    } // 追加: Todoをすべて一覧にする処理を終えます。
+                    html += "</ul>"; // 追加: 一覧のHTMLを閉じます。
+                }
+                html += "</body></html>";
                 message = html; // 追加: 表示する内容にHTMLを入れます。
                 exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8"); // 追加:
                                                                                                // HTMLとしてUTF-8で表示します。
