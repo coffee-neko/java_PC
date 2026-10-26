@@ -7,10 +7,15 @@ import java.util.List; // 追加: Todoの一覧を扱うListを使います。
 import java.util.ArrayList; // 追加: Todoを入れるArrayListを使います。
 
 public class App { // プログラム本体です。
+    static List<Todo> todos = new ArrayList<>(); // ★変更
+    static int nextId = 1; // ★変更
+
     public static void main(String[] args) throws Exception { // プログラムを開始します。//【1】
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0); // 8080番でサーバーを用意します。
-        // 追加: Todoを保存しておく一覧を一度だけ用意します。
-        List<String> todos = new ArrayList<>();
+        todos.add(new Todo(nextId++, "牛乳を買う")); // ★変更
+        Todo egg = new Todo(nextId++, "卵を買う"); // ★変更
+        egg.setDone(true); // ★変更
+        todos.add(egg); // ★変更
 
         server.createContext("/", exchange -> { // 「/」へのアクセスを受け取ります。//【1】
             String path = exchange.getRequestURI().getPath(); // 追加: アクセスされたパス（住所の末尾）を取り出します。
@@ -25,9 +30,10 @@ public class App { // プログラム本体です。
                 // 追加: todo= の5文字を除いた値を取り出します。
                 String value = body.substring(5);
                 // 追加: URL形式の日本語を元の文字に戻します。
-                String todo = URLDecoder.decode(value, StandardCharsets.UTF_8);
-                if (!todo.isEmpty()) { // 追加: 空でないTodoだけを追加します。
-                    todos.add(todo); // 追加: Todoを一覧に追加します。
+                String title = URLDecoder.decode(value, StandardCharsets.UTF_8); // ★変更
+                if (!title.isEmpty()) { // ★変更
+                    todos.add(new Todo(nextId, title)); // ★変更
+                    nextId++; // ★変更
                 } // 追加: 空かどうかの確認を終えます。
                 exchange.getResponseHeaders().set("Location", "/"); // 追加: トップページへ戻る場所を指定します。
                 exchange.sendResponseHeaders(303, -1); // 追加: 303（戻り先へ移動する返事）を送ります。
@@ -36,22 +42,17 @@ public class App { // プログラム本体です。
             } else if (path.equals("/")) { // 追加: トップページでフォームと一覧を表示します。
                 String html = "<form method='post' action='/add'><input name='todo'><button>追加</button></form><ul>"; // 追加:
                                                                                                                      // 入力フォームと一覧のHTMLを始めます。
-                for (String todo : todos) { // 追加: Todoを1件ずつ取り出します。
-                    html += "<li>" + todo + "</li>"; // 追加: Todoを一覧の1行にします。
+                for (Todo todo : todos) { // ★変更
+                    String mark = ""; // ★変更
+                    if (todo.isDone()) { // ★変更
+                        mark = " ✔"; // ★変更
+                    } // ★変更
+                    html += "<li>" + todo.getTitle() + mark + "</li>"; // ★変更
                 } // 追加: Todoをすべて一覧にする処理を終えます。
                 html += "</ul>"; // 追加: 一覧のHTMLを閉じます。
                 message = html; // 追加: 表示する内容にHTMLを入れます。
                 exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8"); // 追加:
                                                                                                // HTMLとしてUTF-8で表示します。
-            } else if (path.equals("/hello")) { // 追加: パスが /hello と同じか比べます。
-                String query = exchange.getRequestURI().getRawQuery(); // 追加: クエリ（URLの ? より後ろ）を取り出します。
-                System.out.println("query = " + query);
-                String name = query == null ? "ゲスト" : query.substring(5); // 修正: クエリがないときはゲスト、それ以外は name= の後ろを切り出します。
-                message = "こんにちは、" + name + "さん！"; // 追加: 名前を入れたあいさつにします。
-            } else if (path.equals("/menu")) { // 追加: パスが /bye と同じか比べます。
-                message = "今日のお昼はビリヤニさん";
-            } else if (path.equals("/bye")) { // 追加: パスが /bye と同じか比べます。
-                message = "さようなら！";
             } else {
                 message = "ページが見つかりません";
             }
@@ -67,3 +68,31 @@ public class App { // プログラム本体です。
         System.out.println("サーバー起動: http://localhost:8080 （止めるときは Ctrl+C）"); // 起動した場所を表示します。
     } // 開始処理を終えます。
 } // プログラム本体を終えます。
+
+class Todo { // ★変更
+    private final int id; // ★変更
+    private final String title; // ★変更
+    private boolean done; // ★変更
+
+    Todo(int id, String title) { // ★変更
+        this.id = id; // ★変更
+        this.title = title; // ★変更
+        this.done = false; // ★変更
+    } // ★変更
+
+    int getId() { // ★変更
+        return id; // ★変更
+    } // ★変更
+
+    String getTitle() { // ★変更
+        return title; // ★変更
+    } // ★変更
+
+    boolean isDone() { // ★変更
+        return done; // ★変更
+    } // ★変更
+
+    void setDone(boolean done) { // ★変更
+        this.done = done; // ★変更
+    } // ★変更
+} // ★変更
